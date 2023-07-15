@@ -58,7 +58,6 @@ parser = argparse.ArgumentParser(description = 'Train/test MLP on TDA features')
 parser.add_argument("--input_dir", help="input directory of csv", required=True)
 parser.add_argument("--feat_dir", help="input directory of TDA features", required=True)
 parser.add_argument("--domain", help="Domain of GCDC split", required=True, choices=['clinton', 'yelp', 'enron', 'yahoo'])
-parser.add_argument("--nSamples", help="Number of training samples", default=10**10)
 
 args = parser.parse_args()
 print(args)
@@ -68,7 +67,6 @@ n_layers = 12
 model_name = "roberta-base"
 layers_of_interest = [i for i in range(n_layers)]  # Layers for which attention matrices and features on them are 
                                              # calculated.
-max_examples_to_train = args.nSamples
 
 train_subset = f"{args.domain}_train"
 test_subset  = f"{args.domain}_test"
@@ -113,7 +111,6 @@ elif "expert_label" in train_data.columns:
     test_data.rename(columns={'expert_label':'labels'}, inplace=True)
 
 y_test = list(map(int, test_data["labels"]))
-train_data = train_data[:max_examples_to_train]
 
 X_train = []
 for i in range(len(train_data)):

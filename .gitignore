@@ -1,4 +1,7 @@
 GCDC_Dataset/
 gcdc_tda_features/
 
+WSJ_Dataset/
+wsj_tda_features/
+
 *pyc
