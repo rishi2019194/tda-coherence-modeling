@@ -9,7 +9,10 @@ conda activate tda-modeling-env
 
 ## Usage
 
-Generating TDA features for a dataset:
+Generate a processed version of the WSJ dataset using `preproc_wsj.py`, (sentence and para jumbling).
+Generate document indexes for few-shot learning using `few-shot_data_setup.py`
+
+Computing TDA features for a dataset:
 
 ```py
 python feature_gen.py --cuda 0 --data_name clinton_train --input_dir GCDC_Dataset/ --output_dir gcdc_tda_features --batch_size 100
@@ -20,8 +23,6 @@ Train/test MLP using generated TDA features:
 ```py
 python predict_tda.py --input_dir GCDC_dataset/ --feat_dir gcdc_tda_features/  --domain clinton
 ```
-
-Generate a processed version of the WSJ dataset using `preproc_wsj.py`, (sentence and para jumbling).
 
 ## Data
 

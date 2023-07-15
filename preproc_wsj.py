@@ -1,13 +1,12 @@
+'''
+Read .jsonl files from WSJ dataset preprocessed by https://github.com/tushar117/Transformer-Models-for-Text-Coherence-Assessment,
+Process them into permuted datasets in .csv format for both sentence jumbling and paragraph jumbling
+'''
 import pandas as pd
 from tqdm import tqdm
 from math import factorial
 import random
 import itertools
-
-'''
-Read .jsonl files from WSJ dataset preprocessed by https://github.com/tushar117/Transformer-Models-for-Text-Coherence-Assessment,
-Process them into permuted datasets in .csv format for both sentence jumbling and paragraph jumbling
-'''
 
 def prepare_df_for_processing(df):
     '''minor preparation before jumbling'''
