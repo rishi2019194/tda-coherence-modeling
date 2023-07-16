@@ -6,11 +6,10 @@
 conda env create -f environment.yml
 conda activate tda-modeling-env
 ```
+- Generate a processed version of the WSJ dataset using `preproc_wsj.py`, (sentence and para jumbling).
+- Generate document indexes for few-shot learning using `few-shot_data_setup.py`
 
 ## Usage
-
-Generate a processed version of the WSJ dataset using `preproc_wsj.py`, (sentence and para jumbling).
-Generate document indexes for few-shot learning using `few-shot_data_setup.py`
 
 Computing TDA features for a dataset:
 
