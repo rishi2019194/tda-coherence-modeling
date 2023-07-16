@@ -13,6 +13,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from glob import glob
+import operator
+
+def feature_reduction_using_mutual_info(train, val, test, train_label, n_features=2500):
+    train, val, test = np.array(train), np.array(val), np.array(test)
+
+    mutual_info = mutual_info_classif(train, train_label)
+    d = {index: value for index, value in enumerate(mutual_info)}
+    sorted_d = dict( sorted(d.items(), key=operator.itemgetter(1),reverse=True))
+    cols_included = list(sorted_d.keys())[:n_features]
+    
+    train = train[:, cols_included]
+    val = val[:, cols_included]
+    test = test[:, cols_included]
+    return train, val, test
 
 
 def load_feat(input_dir, subset, filepattern, type):
@@ -114,6 +128,8 @@ y_test = test_data["expert_label"]
 
 assert(len(train_data) == len(X_train))
 assert(len(test_data) == len(X_test))
+
+X_train, X_val, X_test = feature_reduction_using_mutual_info(X_train, X_val, X_test, y_train)
 
 # The classifier with concrete hyperparameters values, which you should insert here.
 ## Grid Search of hyperparameters. Use it on the dev/vaild set!
