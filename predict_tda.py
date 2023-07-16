@@ -10,8 +10,7 @@ import argparse
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.svm import SVR, SVC
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
-from sklearn.inspection import permutation_importance
+from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from glob import glob
 

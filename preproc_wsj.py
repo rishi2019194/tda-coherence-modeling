@@ -88,8 +88,8 @@ test_SJ = sentence_jumbling(test)
 train_PJ = para_jumbling(train)
 test_PJ = para_jumbling(test)
 
-train_SJ.to_csv("WSJ_Dataset/train_sentence_jumbling.csv")
-test_SJ.to_csv("WSJ_Dataset/test_sentence_jumbling.csv")
+train_SJ.to_csv("WSJ_Dataset/sentence_jumbling_train.csv")
+test_SJ.to_csv("WSJ_Dataset/sentence_jumbling_test.csv")
 
-train_PJ.to_csv("WSJ_Dataset/train_para_jumbling.csv")
-test_PJ.to_csv("WSJ_Dataset/test_para_jumbling.csv")
+train_PJ.to_csv("WSJ_Dataset/para_jumbling_train.csv")
+test_PJ.to_csv("WSJ_Dataset/para_jumbling_test.csv")
