@@ -9,12 +9,30 @@ import warnings
 import argparse
 from sklearn.neural_network import MLPClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVR, SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from glob import glob
 import operator
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+
+class CoherenceClassifier(nn.Module):
+    def __init__(self):
+        super(CoherenceClassifier, self).__init__()
+        self.fc1 = nn.Linear(2500, 64)
+        self.fc2 = nn.Linear(64, 3)
+        self.relu = nn.ReLU()
+        self.drop = nn.Dropout(p=0.3)
+
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.drop(x)
+        x = self.fc2(x)
+        return x
+
+
 
 def feature_reduction_using_mutual_info(train, val, test, train_label, n_features=2500):
     train, val, test = np.array(train), np.array(val), np.array(test)
@@ -64,7 +82,8 @@ parser = argparse.ArgumentParser(description = 'Train/test MLP on TDA features')
 parser.add_argument("--input_dir", help="input directory of csv", required=True)
 parser.add_argument("--feat_dir", help="input directory of TDA features", required=True)
 parser.add_argument("--domain", help="Domain of GCDC split", required=True, choices=['clinton', 'yelp', 'enron', 'yahoo'])
-parser.add_argument("--classifier_type", help="Type of classifier used", default='logreg', choices=['sklearn_mlp', 'logreg'])
+parser.add_argument("--classifier_type", help="Type of classifier used", default='logreg', choices=['sklearn_mlp', 'logreg', 'torch_mlp'])
+parser.add_argument("--cuda", help="GPU ID", default=1)
 
 args = parser.parse_args()
 print(args)
@@ -169,6 +188,37 @@ if args.classifier_type == "sklearn_mlp":
 elif args.classifier_type == "logreg":
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
     classifier = LogisticRegression(C=0.0005, max_iter=1000)
+elif args.classifier_type == "torch_mlp":
+    model = CoherenceClassifier().to(args.cuda)
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    n_epochs = 10
+    X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
+
+    train_loader = DataLoader(list(zip(X_train, y_train)), batch_size=16, shuffle=True, num_workers=8)
+    test_loader = DataLoader(list(zip(X_test, y_test)), batch_size=16, shuffle=True, num_workers=8)
+    for epoch_idx in range(n_epochs):
+        for batch in tqdm(train_loader):
+            x, y = batch
+            optimizer.zero_grad()
+            x, y = torch.tensor(x, dtype=torch.float32).to(args.cuda), torch.tensor(y-1).to(args.cuda) # y-1 to make it work with torch
+            pred_y = model(x)
+            loss = loss_fn(pred_y, y)
+            loss.backward()
+            optimizer.step()
+
+        preds_list = []
+        for batch in test_loader:
+            x, y = batch
+            x, y = torch.tensor(x, dtype=torch.float32).to(args.cuda), torch.tensor(y-1).to(args.cuda) # y-1 to make it work with torch
+            pred_y = model(x)
+            pred_labels = pred_y.argmax(dim=1)
+            preds_list.extend(pred_labels.tolist())
+        preds_list = torch.tensor(preds_list)+1 # increment to bring it back in line with gcdc labels
+        y_test_tensor = torch.tensor(np.array(y_test))
+        acc = (preds_list == y_test_tensor).float().mean()
+        print(f"Epoch - {epoch_idx} - Accuracy - {acc}")
+    exit()
 
 classifier.fit(X_train, y_train)
 y_test_pred = classifier.predict(X_test)
