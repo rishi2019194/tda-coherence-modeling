@@ -147,7 +147,7 @@ def get_barcodes(matricies, ntokens_array=[], dim=1, lower_bound=0.0, layer_head
     """Get barcodes from matrix"""
     barcodes = []
     layer, head = layer_head
-    ntokens_array = [256]*len(matricies)
+    ntokens_array = [matricies.shape[-1]]*len(matricies)
 
     for i, matrix in enumerate(matricies):
 #         with open("log.txt", 'w') as fp: # logging into file

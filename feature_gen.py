@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from transformers import BertTokenizer, BertForSequenceClassification, RobertaModel, \
-    RobertaTokenizerFast, RobertaForSequenceClassification, RobertaTokenizer
+    RobertaTokenizerFast, RobertaForSequenceClassification, RobertaTokenizer, XLNetTokenizer, XLNetForSequenceClassification
 import transformers
 import sys
 import os
@@ -32,6 +32,8 @@ parser.add_argument("--data_name", help="Data Name, of the format <domain-name>_
 parser.add_argument("--input_dir", help="input dir to pick up the csv", required=True)
 parser.add_argument("--output_dir", help="output dir to store TDA features", required=True)
 parser.add_argument("--batch_size", help="Batch size", type=int, default=100)
+parser.add_argument("--model", help="Model to be used", default="roberta-base", choices=["roberta-base", "xlnet-base-cased"])
+parser.add_argument("--max_tokens", help="Max number of tokens", type=int, default=256)
 
 args = parser.parse_args()
 print(args)
@@ -41,18 +43,22 @@ os.environ['CUDA_VISIBLE_DEVICES'] = cuda_device
 
 transformers.logging.set_verbosity_error()
 np.random.seed(42) # For reproducibility.
-max_tokens_amount  = 256 # The number of tokens to which the tokenized text is truncated / padded.
+max_tokens_amount  = args.max_tokens # The number of tokens to which the tokenized text is truncated / padded.
 stats_cap          = 500 # Max value that the feature can take. Is NOT applicable to Betty numbers.
 
 layers_of_interest = [i for i in range(12)]  # Layers for which attention matrices and features on them are
                                              # calculated. For calculating features on all layers, leave it be
                                              # [i for i in range(12)].
 n_layers, n_heads = 12, 12
-stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count (see explanation below)
+if args.model == "roberta-base":
+    stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count (see explanation below)
+    model_path = tokenizer_path = "roberta-base"
+elif args.model == "xlnet-base-cased":
+    stats_name = "s_e_c_b0b1" # The set of topological features that will be count (see explanation below)
+    model_path = tokenizer_path = "xlnet-base-cased"
 
 thresholds_array = [0.025, 0.05, 0.1, 0.25, 0.5, 0.75] # The set of thresholds
 thrs = len(thresholds_array)                           # ("t" in the paper)
-model_path = tokenizer_path = "roberta-base"
 
 # ### Explanation of stats_name parameter
 #
@@ -96,7 +102,10 @@ print("Max. amount of words in example:",       np.max(list(map(len, map(lambda 
 print("Min. amount of words in example:",       np.min(list(map(len, map(lambda x: re.sub('\w', ' ', x).split(" "), data['sentence'])))))
 
 MAX_LEN = max_tokens_amount
-tokenizer = RobertaTokenizer.from_pretrained(tokenizer_path, do_lower_case=False)
+if args.model == "roberta-base":
+    tokenizer = RobertaTokenizer.from_pretrained(tokenizer_path, do_lower_case=False)
+elif args.model == "xlnet-base-cased":
+    tokenizer = XLNetTokenizer.from_pretrained(tokenizer_path, do_lower_case=False)
 tokenizer.do_lower_case = False
 data['tokenizer_length'] = get_token_length(data['sentence'].values, tokenizer, MAX_LEN)
 ntokens_array = data['tokenizer_length'].values
@@ -108,7 +117,10 @@ assert number_of_batches == len(batched_sentences) # sanity check
 Q = Queue()
 
 def get_attention_matrices(model_path, tokenizer, batch, MAX_LEN):
-    model = RobertaForSequenceClassification.from_pretrained(model_path, output_attentions=True)
+    if model_path == "roberta-base":
+        model = RobertaForSequenceClassification.from_pretrained(model_path, output_attentions=True)
+    elif model_path == "xlnet-base-cased":
+        model = XLNetForSequenceClassification.from_pretrained(model_path, output_attentions=True)
     model = model.to('cuda')
 
     minibatch_size = 25
