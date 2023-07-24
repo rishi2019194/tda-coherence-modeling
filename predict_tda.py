@@ -84,13 +84,21 @@ parser.add_argument("--feat_dir", help="input directory of TDA features", requir
 parser.add_argument("--domain", help="Domain of GCDC split", required=True, choices=['clinton', 'yelp', 'enron', 'yahoo'])
 parser.add_argument("--classifier_type", help="Type of classifier used", default='logreg', choices=['sklearn_mlp', 'logreg', 'torch_mlp'])
 parser.add_argument("--cuda", help="GPU ID", default=1)
+parser.add_argument("--model", help="Model to be used", default="roberta-base", choices=["roberta-base", "xlnet-base-cased"])
+parser.add_argument("--max_tokens", help="Max number of tokens", type=int, default=256)
 
 args = parser.parse_args()
 print(args)
 
-max_tokens_amount  = 256 # The number of tokens to which the tokenized text is truncated / padded.
+max_tokens_amount = args.max_tokens # The number of tokens to which the tokenized text is truncated / padded.
 n_layers = 12
-model_name = "roberta-base"
+model_name = args.model
+if args.model == "roberta-base":
+    stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count (see explanation below)
+    model_name = "roberta-base"
+elif args.model == "xlnet-base-cased":
+    stats_name = "s_e_c_b0b1" # The set of topological features that will be count (see explanation below)
+    model_name = "xlnet-base-cased"
 layers_of_interest = [i for i in range(n_layers)]  # Layers for which attention matrices and features on them are 
                                              # calculated.
 
@@ -100,10 +108,10 @@ input_dir = args.input_dir  # Name of the directory with .csv file
 feat_dir = args.feat_dir
 
 old_features_train = load_feat(feat_dir, train_subset,
-        f"_all_heads_{n_layers}_layers_s_e_v_c_b0b1_lists_array_6_thrs_MAX_LEN_{max_tokens_amount}_{model_name}",
+        f"_all_heads_{n_layers}_layers_{stats_name}_lists_array_6_thrs_MAX_LEN_{max_tokens_amount}_{model_name}",
         type="old_f")
 old_features_test = load_feat(feat_dir, test_subset,
-        f"_all_heads_{n_layers}_layers_s_e_v_c_b0b1_lists_array_6_thrs_MAX_LEN_{max_tokens_amount}_{model_name}",
+        f"_all_heads_{n_layers}_layers_{stats_name}_lists_array_6_thrs_MAX_LEN_{max_tokens_amount}_{model_name}",
         type="old_f")
 old_features_train, old_features_test = scale_feat(old_features_train, old_features_test)
 ripser_train = load_feat(feat_dir, train_subset,
