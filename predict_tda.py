@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
@@ -86,6 +87,7 @@ parser.add_argument("--classifier_type", help="Type of classifier used", default
 parser.add_argument("--cuda", help="GPU ID", default=1)
 parser.add_argument("--model", help="Model to be used", default="roberta-base", choices=["roberta-base", "xlnet-base-cased"])
 parser.add_argument("--max_tokens", help="Max number of tokens", type=int, default=256)
+parser.add_argument("--train_size", help="subset of training set to be used", type=float, default=1.0)
 
 args = parser.parse_args()
 print(args)
@@ -106,6 +108,7 @@ train_subset = f"{args.domain}_train"
 test_subset  = f"{args.domain}_test"
 input_dir = args.input_dir  # Name of the directory with .csv file
 feat_dir = args.feat_dir
+train_size = args.train_size
 
 old_features_train = load_feat(feat_dir, train_subset,
         f"_all_heads_{n_layers}_layers_{stats_name}_lists_array_6_thrs_MAX_LEN_{max_tokens_amount}_{model_name}",
@@ -141,6 +144,13 @@ for i in range(len(train_data)):
                                ripser_train[i],
                                templ_train[i]))
     X_train.append(features)
+
+if args.train_size != 1.0:
+    print("Using subset of dataset for training")
+    train_subset_json = json.load(open(f"{input_dir}/{args.domain}_few_shot_idxs.json", "r"))
+    train_subset_idxs = train_subset_json[str(args.train_size)]
+    train_data = train_data.iloc[train_subset_idxs]
+    X_train = list(np.array(X_train)[train_subset_idxs])
 
 train_data, val_data, X_train, X_val = train_test_split(train_data, X_train, test_size=0.1, random_state=seed)
 
