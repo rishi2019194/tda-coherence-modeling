@@ -6,8 +6,6 @@
 conda env create -f environment.yml
 conda activate tda-modeling-env
 ```
-- Generate a processed version of the WSJ dataset using `preproc_wsj.py`, (sentence and para jumbling).
-- Generate document indexes for few-shot learning using `few-shot_data_setup.py`
 
 ## Usage
 
@@ -26,7 +24,6 @@ python predict_tda.py --input_dir GCDC_dataset/ --feat_dir gcdc_tda_features/  -
 ## Data
 
 - **GCDC** - Refer [GCDC-Corpus](https://github.com/aylai/GCDC-corpus) for the source
-- **WSJ** - Available in [Penn Treebank](https://catalog.ldc.upenn.edu/LDC99T42). This repo uses a processed version from the [Transformer Models for Text Coherence Assessment](https://github.com/tushar117/Transformer-Models-for-Text-Coherence-Assessment) repo.
 
 ## Acknowledgements
 
