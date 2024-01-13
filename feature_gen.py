@@ -89,12 +89,13 @@ input_dir = args.input_dir  # Name of the directory with .csv file
 output_dir = args.output_dir # Name of the directory with calculations results
 os.makedirs(output_dir, exist_ok=True)
 
-# .csv file must contain the column with the name **sentence** with the texts. It can also contain the column **labels**, which will be needed for testing. Any other arbitrary columns will be ignored.
+# .csv file must contain the column with the name **text** with the texts.
+# It can also contain the column **labelA**, which will be needed for testing. Any other arbitrary columns will be ignored.
 
 batch_size = args.batch_size
 
 data = pd.read_csv(input_dir + subset + ".csv").reset_index(drop=True)
-data['sentence'] = data['doc']
+data['sentence'] = data['text']
 
 sentences = data['sentence']
 print("Average amount of words in example:",       np.mean(list(map(len, map(lambda x: re.sub('\w', ' ', x).split(" "), data['sentence'])))))

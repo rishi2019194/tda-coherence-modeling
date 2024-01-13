@@ -264,7 +264,7 @@ dependencies:
     - requests-html==0.10.0
     - requests-oauthlib==1.3.1
     - responses==0.18.0
-    - ripserplusplus==1.1.3
+    - ripserplusplus==1.1.2
     - rsa==4.9
     - sacremoses==0.0.53
     - scikit-learn==1.1.2
@@ -287,8 +287,8 @@ dependencies:
     - threadpoolctl==3.1.0
     - tokenizers==0.12.1
     - tomli==2.0.1
-    - torch==2.0.0+cu118
-    - torchaudio==2.0.1+cu118
+    - torch==2.0.0
+    - torchaudio==2.0.1
     - torchmetrics==0.11.3
     - torchvision==0.15.1
     - tqdm==4.64.1
