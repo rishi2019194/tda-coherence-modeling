@@ -18,6 +18,7 @@ import operator
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+from copy import deepcopy
 
 class CoherenceClassifier(nn.Module):
     def __init__(self):
@@ -203,21 +204,26 @@ if args.classifier_type == "sklearn_mlp":
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
     classifier = MLPClassifier(hidden_layer_sizes=(150,100,50), max_iter=best_max_iter,activation = 'relu',solver=solver,random_state=seed, alpha = best_C)
     classifier.out_activation_ = 'softmax'
+    classifier.fit(X_train, y_train)
+    y_test_pred = classifier.predict(X_test)
 elif args.classifier_type == "logreg":
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
     classifier = LogisticRegression(C=0.0005, max_iter=1000)
+    classifier.fit(X_train, y_train)
+    y_test_pred = classifier.predict(X_test)
 elif args.classifier_type == "torch_mlp":
     model = CoherenceClassifier().to(args.cuda)
     loss_fn = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=5e-2)
-    n_epochs = 10
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=5e-2, eps=1e-8)
+    n_epochs = 50
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
 
     train_loader = DataLoader(list(zip(X_train, y_train)), batch_size=16, shuffle=True, num_workers=8)
-    test_loader = DataLoader(list(zip(X_test, y_test)), batch_size=16, shuffle=True, num_workers=8)
-    for epoch_idx in range(n_epochs):
+    test_loader = DataLoader(list(zip(X_test, y_test)), batch_size=16, shuffle=False, num_workers=8)
+    best_acc = 0
+    for epoch_idx in tqdm(range(n_epochs)):
         model.train()
-        for batch in tqdm(train_loader):
+        for batch in train_loader:
             x, y = batch
             optimizer.zero_grad()
             x, y = torch.tensor(x, dtype=torch.float32).to(args.cuda), torch.tensor(y-1).to(args.cuda) # y-1 to make it work with torch
@@ -237,14 +243,23 @@ elif args.classifier_type == "torch_mlp":
         preds_list = torch.tensor(preds_list)+1 # increment to bring it back in line with gcdc labels
         y_test_tensor = torch.tensor(np.array(y_test))
         acc = (preds_list == y_test_tensor).float().mean()
-        print(f"Epoch - {epoch_idx} - Accuracy - {acc}")
-    exit()
+        if acc > best_acc:
+            best_acc = acc
+            best_model = deepcopy(model)
 
-classifier.fit(X_train, y_train)
-y_test_pred = classifier.predict(X_test)
+    best_model.eval()
+    preds_list = []
+    for batch in test_loader:
+        x, y = batch
+        x, y = torch.tensor(x, dtype=torch.float32).to(args.cuda), torch.tensor(y-1).to(args.cuda) # y-1 to make it work with torch
+        pred_y = best_model(x)
+        pred_labels = pred_y.argmax(dim=1)
+        preds_list.extend(pred_labels.tolist())
+    y_test_pred = np.array(preds_list)+1 # increment to bring it back in line with gcdc labels
+
 test_accuracy = accuracy_score(y_test_pred, y_test)
 
-print("Test results (actual, predicted): ", list(zip(y_test_pred, y_test)))
+print("Test results (predicted, actual): ", list(zip(y_test_pred, y_test)))
 print("Test accuracy is:", test_accuracy)
 print("Confusion Matrix:\n", confusion_matrix(y_test, y_test_pred))
 print("Classification Report:\n", classification_report(y_test, y_test_pred))
