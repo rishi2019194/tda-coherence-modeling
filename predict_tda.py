@@ -23,9 +23,9 @@ from copy import deepcopy
 class CoherenceClassifier(nn.Module):
     def __init__(self):
         super(CoherenceClassifier, self).__init__()
-        self.fc1 = nn.Linear(9216, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 3)
+        self.fc1 = nn.Linear(9216, 256)
+        self.fc2 = nn.Linear(256, 64)
+        self.fc3 = nn.Linear(64, 3)
         self.relu = nn.ReLU()
         self.drop1 = nn.Dropout(p=0.6)
         self.drop2 = nn.Dropout(p=0.3)
@@ -215,7 +215,7 @@ elif args.classifier_type == "torch_mlp":
     model = CoherenceClassifier().to(args.cuda)
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=5e-2, eps=1e-8)
-    n_epochs = 50
+    n_epochs = 100
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
 
     train_loader = DataLoader(list(zip(X_train, y_train)), batch_size=16, shuffle=True, num_workers=8)
