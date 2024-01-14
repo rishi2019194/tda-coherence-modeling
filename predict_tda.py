@@ -22,18 +22,17 @@ from torch.utils.data import Dataset, DataLoader
 class CoherenceClassifier(nn.Module):
     def __init__(self):
         super(CoherenceClassifier, self).__init__()
-        self.fc1 = nn.Linear(2500, 64)
-        self.fc2 = nn.Linear(64, 3)
+        self.fc1 = nn.Linear(9360, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 3)
         self.relu = nn.ReLU()
-        self.drop = nn.Dropout(p=0.3)
+        self.drop1 = nn.Dropout(p=0.6)
+        self.drop2 = nn.Dropout(p=0.3)
 
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.drop(x)
-        x = self.fc2(x)
+        x = self.drop1(self.relu(self.fc1(x)))
+        x = self.drop2(self.relu(self.fc2(x)))
         return x
-
-
 
 def feature_reduction_using_mutual_info(train, val, test, train_label, n_features=2500):
     train, val, test = np.array(train), np.array(val), np.array(test)
@@ -84,7 +83,7 @@ parser.add_argument("--input_dir", help="input directory of csv", required=True)
 parser.add_argument("--feat_dir", help="input directory of TDA features", required=True)
 parser.add_argument("--domain", help="Domain of GCDC split", required=True, choices=['clinton', 'yelp', 'enron', 'yahoo'])
 parser.add_argument("--classifier_type", help="Type of classifier used", default='logreg', choices=['sklearn_mlp', 'logreg', 'torch_mlp'])
-parser.add_argument("--cuda", help="GPU ID", default=1)
+parser.add_argument("--cuda", help="GPU ID", default=0)
 parser.add_argument("--model", help="Model to be used", default="roberta-base", choices=["roberta-base", "xlnet-base-cased"])
 parser.add_argument("--max_tokens", help="Max number of tokens", type=int, default=256)
 parser.add_argument("--train_size", help="subset of training set to be used", type=float, default=1.0)
@@ -136,7 +135,7 @@ templ_train, templ_test = scale_feat(templ_train, templ_test)
 
 train_data = pd.read_csv(f"{input_dir}/{train_subset}.csv")
 test_data = pd.read_csv(f"{input_dir}/{test_subset}.csv")
-y_test = list(map(int, test_data["expert_label"]))
+y_test = list(map(int, test_data["labelA"]))
 
 X_train = []
 for i in range(len(train_data)):
@@ -154,8 +153,8 @@ if args.train_size != 1.0:
 
 train_data, val_data, X_train, X_val = train_test_split(train_data, X_train, test_size=0.1, random_state=seed)
 
-y_train = train_data["expert_label"]
-y_val = val_data["expert_label"]
+y_train = train_data["labelA"]
+y_val = val_data["labelA"]
 
 X_test = []
 for i in range(len(test_data)):
@@ -163,12 +162,12 @@ for i in range(len(test_data)):
                                ripser_test[i],
                                templ_test[i]))
     X_test.append(features)
-y_test = test_data["expert_label"]
+y_test = test_data["labelA"]
 
 assert(len(train_data) == len(X_train))
 assert(len(test_data) == len(X_test))
 
-X_train, X_val, X_test = feature_reduction_using_mutual_info(X_train, X_val, X_test, y_train)
+#X_train, X_val, X_test = feature_reduction_using_mutual_info(X_train, X_val, X_test, y_train)
 
 if args.classifier_type == "sklearn_mlp":
     # The classifier with concrete hyperparameters values, which you should insert here.
@@ -209,7 +208,7 @@ elif args.classifier_type == "logreg":
 elif args.classifier_type == "torch_mlp":
     model = CoherenceClassifier().to(args.cuda)
     loss_fn = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=5e-2)
     n_epochs = 10
     X_train, y_train = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
 
