@@ -32,6 +32,7 @@ class CoherenceClassifier(nn.Module):
     def forward(self, x):
         x = self.drop1(self.relu(self.fc1(x)))
         x = self.drop2(self.relu(self.fc2(x)))
+        x = self.fc3(x)
         return x
 
 def feature_reduction_using_mutual_info(train, val, test, train_label, n_features=2500):
@@ -215,6 +216,7 @@ elif args.classifier_type == "torch_mlp":
     train_loader = DataLoader(list(zip(X_train, y_train)), batch_size=16, shuffle=True, num_workers=8)
     test_loader = DataLoader(list(zip(X_test, y_test)), batch_size=16, shuffle=True, num_workers=8)
     for epoch_idx in range(n_epochs):
+        model.train()
         for batch in tqdm(train_loader):
             x, y = batch
             optimizer.zero_grad()
@@ -224,6 +226,7 @@ elif args.classifier_type == "torch_mlp":
             loss.backward()
             optimizer.step()
 
+        model.eval()
         preds_list = []
         for batch in test_loader:
             x, y = batch
