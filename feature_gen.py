@@ -237,7 +237,6 @@ for i in tqdm(range(number_of_batches), desc="Feature Calculation Loop"):
         'h0_n_d_m_t0.75',
         'h0_n_d_m_t0.5',
         'h0_n_d_l_t0.25',
-        'h1_t_b',
         'h1_n_b_m_t0.25',
         'h1_n_b_l_t0.95',
         'h1_n_b_l_t0.70',

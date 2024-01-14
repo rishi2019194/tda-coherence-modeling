@@ -22,7 +22,7 @@ from torch.utils.data import Dataset, DataLoader
 class CoherenceClassifier(nn.Module):
     def __init__(self):
         super(CoherenceClassifier, self).__init__()
-        self.fc1 = nn.Linear(9360, 64)
+        self.fc1 = nn.Linear(9216, 64)
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 3)
         self.relu = nn.ReLU()
