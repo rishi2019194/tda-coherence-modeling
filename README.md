@@ -38,9 +38,9 @@ We thank the authors of [Artificial Text Detection via Examining the Topology of
 If you find this code useful for your research, please cite the following paper:
 
 ```bibtex
-@inproceedings{jain2024beyond,
+@inproceedings{singhal2024beyond,
   title={Beyond Words: A Topological Exploration of Coherence in Text Documents},
-  author={Jain, Samyak and Singhal, Rishi and Krishna, Sriram and Singla, Yaman K and Shah, Rajiv Ratn},
+  author={Singhal, Rishi and Jain, Samyak  and Krishna, Sriram and Singla, Yaman K and Shah, Rajiv Ratn},
   booktitle={The Second Tiny Papers Track at ICLR 2024}
 }
 ```
